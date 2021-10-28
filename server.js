@@ -1,7 +1,15 @@
 const express = require("express");
 const axios = require("axios").default;
 const cheerio = require("cheerio");
+const cors = require("cors");
+const corsOptions = {
+  origin: "http://localhost:3000",
+  credentials: true,
+  optionSuccessStatus: 200,
+};
+app.use(cors(corsOptions));
 const app = express();
+
 const port = process.env.PORT || 8000;
 
 axios.defaults.baseURL = "https://wuxiaworld.site";
