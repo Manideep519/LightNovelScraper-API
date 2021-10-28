@@ -2,7 +2,7 @@ const express = require("express");
 const axios = require("axios").default;
 const cheerio = require("cheerio");
 const app = express();
-const port = process.env.port || 8000;
+const port = process.env.PORT || 8000;
 
 axios.defaults.baseURL = "https://wuxiaworld.site";
 
@@ -13,8 +13,14 @@ app.use(function (req, res, next) {
   next();
 });
 
+// Status check
+
+app.get("/", (req, res, next) => {
+  res.send(JSON.stringify("API is up and runing"));
+});
+
 // Get seperate novel inforomation (name,author, chapters list, etc)
-app.get("/novel/:name", (req, res, error) => {
+app.get("/novel/:name", (req, res, next) => {
   axios
     .get(`novel/${req.params.name.replace(/^name:/, "")}`)
     .then((response) => {
@@ -67,7 +73,7 @@ app.get("/novel/:name", (req, res, error) => {
 });
 
 // Get specific chapter content
-app.get("/novel/:name/:chapter", (req, res, error) => {
+app.get("/novel/:name/:chapter", (req, res, next) => {
   console.log(req.params.name.replace(/^name:/, ""));
   axios
     .get(`novel/${req.params.name.replace(/^name:/, "")}/chapter-${req.params.chapter.replace(/^chapter:/, "")}`)
@@ -93,7 +99,7 @@ app.get("/novel/:name/:chapter", (req, res, error) => {
 });
 
 // Get all novels available 10 novels data each request and sort query
-app.get("/novel-list/:order", (req, res, error) => {
+app.get("/novel-list/:order", (req, res, next) => {
   let viewBy = req.params.order.replace(/^order=/, "");
 
   axios
