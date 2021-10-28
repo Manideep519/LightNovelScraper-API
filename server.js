@@ -70,12 +70,12 @@ app.get("/novel/:name", (req, res, next) => {
             novelData.geners.push(elm.data);
           });
 
-        res.send(JSON.stringify({ novelData }));
+        res.send(JSON.stringify(novelData));
         res.end();
       }
     })
     .catch((error) => {
-      res.send(JSON.stringify("Error: something went wrong, or check the url", { error }));
+      res.send(JSON.stringify("Error: something went wrong, or check the url", error));
       res.end();
     });
 });
@@ -96,12 +96,12 @@ app.get("/novel/:name/:chapter", (req, res, next) => {
         } else {
           chapter_data = $.html("div.text-left p");
         }
-        res.send(JSON.stringify({ chapter_title, chapter_data }));
+        res.send(JSON.stringify(chapter_title, chapter_data));
         res.end();
       }
     })
     .catch((error) => {
-      res.send(JSON.stringify("Error: something went wrong, or check the url", { error }));
+      res.send(JSON.stringify("Error: something went wrong, or check the url", error));
       res.end();
     });
 });
@@ -152,12 +152,12 @@ app.get("/novel-list/:order", (req, res, next) => {
             novel.metaData.lastUpdatedTime.push(elm.data.replace(/^\n/, ""));
           });
 
-        res.end(JSON.stringify({ novel }));
+        res.end(JSON.stringify(novel));
         res.end();
       }
     })
     .catch((error) => {
-      res.send(JSON.stringify("Error: something went wrong, or check the url", { error }));
+      res.send(JSON.stringify("Error: something went wrong, or check the url", error));
       res.end();
     });
 });
