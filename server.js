@@ -72,12 +72,15 @@ app.get("/novel/:name", (req, res, next) => {
       }
     })
     .catch((error) => {
+      console.log(error);
       res.send(JSON.stringify("Error: something went wrong, or check the url", error));
       res.end();
     });
 });
 
 // Get specific chapter content
+
+//
 app.get("/novel/:name/:chapter", (req, res, next) => {
   axios
     .get(`novel/${req.params.name.replace(/^name:/, "")}/chapter-${req.params.chapter.replace(/^chapter:/, "")}`)
@@ -92,14 +95,19 @@ app.get("/novel/:name/:chapter", (req, res, next) => {
       }
     })
     .catch((error) => {
+      console.log(error);
       res.send(JSON.stringify("Error: something went wrong, or check the url", error));
       res.end();
     });
 });
 
 // Get all novels available 10 novels data each request and sort query
+
+//
 app.get("/novel-list/:order", (req, res, next) => {
   let viewBy = req.params.order.replace(/^order=/, "");
+  let novel = [];
+  let imageUrlsArray = [];
 
   axios
     .get(`/novel-list/page/1/?m_orderby=${viewBy}`)
@@ -107,7 +115,6 @@ app.get("/novel-list/:order", (req, res, next) => {
       if (response.status === 200) {
         const html = response.data;
         const $ = cheerio.load(html);
-        let novel = [];
 
         $("div.page-item-detail .post-title a")
           .contents()
@@ -116,7 +123,7 @@ app.get("/novel-list/:order", (req, res, next) => {
           });
 
         $("div.page-item-detail a img").each((i, elm) => {
-          novel[i].imageUrl = elm.attribs.src;
+          imageUrlsArray.push(elm.attribs.src);
         });
 
         $("div.page-item-detail span.score")
@@ -136,13 +143,32 @@ app.get("/novel-list/:order", (req, res, next) => {
           .each((i, elm) => {
             novel[i].lastUpdated = elm.data.replace(/^\n/, "");
           });
-
-        res.end(JSON.stringify(novel));
-        res.end();
+      }
+    })
+    .then(() => {
+      if (imageUrlsArray) {
+        axios
+          .all(imageUrlsArray.map((i) => axios.get(i, { responseType: "arraybuffer" })))
+          .then(
+            axios.spread((...response) => {
+              for (let i = 0; i < 10; i++) {
+                //  Buffer.from(res[i].data).toString("base64").replace(/^/, "data:image/jpeg;base64,")
+                novel[i].baseImage = Buffer.from(response[i].data).toString("base64").replace(/^/, "data:image/jpeg;base64,");
+              }
+              res.send(JSON.stringify(novel));
+              res.end();
+            })
+          )
+          .catch((error) => {
+            console.log(error);
+            res.send(JSON.stringify("imagelURlcall Error: something went wrong, or check the url", JSON.stringify(error)));
+            res.end();
+          });
       }
     })
     .catch((error) => {
-      res.send(JSON.stringify("Error: something went wrong, or check the url", error));
+      console.log(error);
+      res.send(JSON.stringify("main catch Error: something went wrong, or check the url", JSON.stringify(error)));
       res.end();
     });
 });
