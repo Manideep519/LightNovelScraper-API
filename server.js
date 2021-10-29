@@ -42,10 +42,7 @@ app.get("/novel/:name", (req, res, next) => {
           geners: [],
           status: "",
           summary: "",
-          chaptersListData: {
-            chapterName: [],
-            chapterTime: [],
-          },
+          chaptersListData: [],
         };
         novelData.name = $("div.post-title h1").html();
         novelData.author = $("div.author-content a").html();
@@ -55,13 +52,13 @@ app.get("/novel/:name", (req, res, next) => {
 
         $("ul.version-chap li.wp-manga-chapter a").each((i, elm) => {
           elm.children.forEach((node) => {
-            novelData.chaptersListData.chapterName.push(node.data);
+            novelData.chaptersListData.push({ chapterName: node.data });
           });
         });
         $("ul.version-chap li.wp-manga-chapter span.chapter-release-date i")
           .contents()
           .each((i, elm) => {
-            novelData.chaptersListData.chapterTime.push(elm.data);
+            novelData.chaptersListData[i].chapterReleaseTime = elm.data;
           });
 
         $("div.genres-content a")
@@ -82,21 +79,15 @@ app.get("/novel/:name", (req, res, next) => {
 
 // Get specific chapter content
 app.get("/novel/:name/:chapter", (req, res, next) => {
-  console.log(req.params.name.replace(/^name:/, ""));
   axios
     .get(`novel/${req.params.name.replace(/^name:/, "")}/chapter-${req.params.chapter.replace(/^chapter:/, "")}`)
     .then((response) => {
       if (response.status === 200) {
         const html = response.data;
         const $ = cheerio.load(html);
-        let chapter_data = "";
-        let chapter_title = $.html("div.text-left h3:first-child");
-        if (Boolean(chapter_title)) {
-          chapter_data = $.html("div.text-left p:not(:first-child)");
-        } else {
-          chapter_data = $.html("div.text-left p");
-        }
-        res.send(JSON.stringify(chapter_title, chapter_data));
+        let chapter_data = $.html("div.text-left p");
+
+        res.send(JSON.stringify(chapter_data));
         res.end();
       }
     })
@@ -116,40 +107,34 @@ app.get("/novel-list/:order", (req, res, next) => {
       if (response.status === 200) {
         const html = response.data;
         const $ = cheerio.load(html);
-        let novel = {
-          links: [],
-          titles: [],
-          imgURLs: [],
-          metaData: { rating: [], latestChapter: [], lastUpdatedTime: [] },
-        };
+        let novel = [];
 
         $("div.page-item-detail .post-title a")
           .contents()
           .each((i, elm) => {
-            novel.titles.push(elm.data);
-            novel.links.push(elm.parentNode.attribs.href);
+            novel.push({ title: elm.data, link: elm.parentNode.attribs.href });
           });
 
         $("div.page-item-detail a img").each((i, elm) => {
-          novel.imgURLs.push(elm.attribs.src);
+          novel[i].imageUrl = elm.attribs.src;
         });
 
         $("div.page-item-detail span.score")
           .contents()
           .each((i, elm) => {
-            novel.metaData.rating.push(elm.data);
+            novel[i].score = elm.data;
           });
 
-        $("div.page-item-detail div.chapter-item a.btn-link")
+        $("div.page-item-detail div.chapter-item:first-child a.btn-link")
           .contents()
           .each((i, elm) => {
-            novel.metaData.latestChapter.push(elm.data);
+            novel[i].lastestChapter = elm.data;
           });
 
-        $("div.page-item-detail div.chapter-item span.post-on")
+        $("div.page-item-detail div.chapter-item:first-child span.post-on")
           .contents()
           .each((i, elm) => {
-            novel.metaData.lastUpdatedTime.push(elm.data.replace(/^\n/, ""));
+            novel[i].lastUpdated = elm.data.replace(/^\n/, "");
           });
 
         res.end(JSON.stringify(novel));
