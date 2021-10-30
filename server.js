@@ -104,13 +104,14 @@ app.get("/novel/:name/:chapter", (req, res, next) => {
 // Get all novels available 10 novels data each request and sort query
 
 //
-app.get("/novel-list/:order", (req, res, next) => {
+app.get("/novel-list/:order/:page", (req, res, next) => {
   let viewBy = req.params.order.replace(/^order=/, "");
+  let page = req.params.page.replace(/^page=/, "");
   let novel = [];
   let imageUrlsArray = [];
 
   axios
-    .get(`/novel-list/page/1/?m_orderby=${viewBy}`)
+    .get(`/novel-list/page/${page}/?m_orderby=${viewBy}`)
     .then((response) => {
       if (response.status === 200) {
         const html = response.data;
