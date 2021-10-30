@@ -29,8 +29,11 @@ app.get("/", (req, res, next) => {
 
 // Get seperate novel inforomation (name,author, chapters list, etc)
 app.get("/novel/:name", (req, res, next) => {
+  let name = req.params.name.replace(/^name:/, "");
+  let encodedURI = encodeURI(`novel/${name}`);
+
   axios
-    .get(`novel/${req.params.name.replace(/^name:/, "")}`)
+    .get(encodedURI)
     .then((response) => {
       if (response.status === 200) {
         const html = response.data;
@@ -47,12 +50,12 @@ app.get("/novel/:name", (req, res, next) => {
         novelData.name = $("div.post-title h1").html();
         novelData.author = $("div.author-content a").html();
         novelData.rating = $("div.post-total-rating span.score").html();
-        novelData.status = $("div.post-status div.summary-content").html().replace(/^\n/, "").replace(/\t$/, "");
+        novelData.status = $("div.post-status div.summary-content").html().replace(/\t$/, "");
         novelData.summary = $("div.summary__content p:odd").html();
 
         $("ul.version-chap li.wp-manga-chapter a").each((i, elm) => {
           elm.children.forEach((node) => {
-            novelData.chaptersListData.push({ chapterName: node.data });
+            novelData.chaptersListData.push({ chapterName: node.data.replace(/\n/g, "") });
           });
         });
         $("ul.version-chap li.wp-manga-chapter span.chapter-release-date i")
@@ -82,8 +85,13 @@ app.get("/novel/:name", (req, res, next) => {
 
 //
 app.get("/novel/:name/:chapter", (req, res, next) => {
+  let name = req.params.name.replace(/^name:/, "");
+  let chapter = req.params.chapter.replace(/^chapter:/, "");
+
+  let encodedURI = encodeURI(`novel/${name}/chapter-${chapter}`);
+
   axios
-    .get(`novel/${req.params.name.replace(/^name:/, "")}/chapter-${req.params.chapter.replace(/^chapter:/, "")}`)
+    .get(encodedURI)
     .then((response) => {
       if (response.status === 200) {
         const html = response.data;
@@ -104,14 +112,16 @@ app.get("/novel/:name/:chapter", (req, res, next) => {
 // Get all novels available 10 novels data each request and sort query
 
 //
-app.get("/novel-list/:order/:page", (req, res, next) => {
+app.get("/novel-list/:page/:order", (req, res, next) => {
   let viewBy = req.params.order.replace(/^order=/, "");
-  let page = req.params.page.replace(/^page=/, "");
+  let page = Number(req.params.page.replace(/^page=/, ""));
+  let encodedURI = encodeURI(`/novel-list/page/${page}/?m_orderby=${viewBy}`);
+
   let novel = [];
   let imageUrlsArray = [];
 
   axios
-    .get(`/novel-list/page/${page}/?m_orderby=${viewBy}`)
+    .get(encodedURI)
     .then((response) => {
       if (response.status === 200) {
         const html = response.data;
@@ -124,7 +134,7 @@ app.get("/novel-list/:order/:page", (req, res, next) => {
           });
 
         $("div.page-item-detail a img").each((i, elm) => {
-          imageUrlsArray.push(elm.attribs.src);
+          imageUrlsArray.push(encodeURI(elm.attribs.src));
         });
 
         $("div.page-item-detail span.score")
@@ -161,14 +171,14 @@ app.get("/novel-list/:order/:page", (req, res, next) => {
             })
           )
           .catch((error) => {
-            console.log(error);
+            console.log("imagelURlcall Error: something went wrong, or check the url" + error);
             res.send(JSON.stringify("imagelURlcall Error: something went wrong, or check the url", JSON.stringify(error)));
             res.end();
           });
       }
     })
     .catch((error) => {
-      console.log(error);
+      console.log("main catch Error: something went wrong, or check the url" + error);
       res.send(JSON.stringify("main catch Error: something went wrong, or check the url", JSON.stringify(error)));
       res.end();
     });
