@@ -33,6 +33,7 @@ app.get("/", (req, res, next) => {
 app.get("/novel/:name", (req, res, next) => {
   let name = req.params.name.replace(/^name:/, "");
   let encodedURI = encodeURI(`novel/${name}`);
+  let imageUrl;
 
   let novelData = {
     name: "",
@@ -41,6 +42,7 @@ app.get("/novel/:name", (req, res, next) => {
     geners: [],
     status: "",
     summary: "",
+    baseImage: "",
     chaptersListData: [],
   };
   axios
@@ -53,7 +55,7 @@ app.get("/novel/:name", (req, res, next) => {
       novelData.rating = $("div.post-total-rating span.score").html();
       novelData.status = $("div.post-status div.summary-content").html().replace(/\t$/, "");
       novelData.summary = $("div.summary__content p:odd").html();
-
+      imageUrl = $("div.tab-summary div.summary_image a img").attr("src");
       $("div.genres-content a")
         .contents()
         .each((i, elm) => {
@@ -61,27 +63,43 @@ app.get("/novel/:name", (req, res, next) => {
         });
     })
     .then(() => {
-      axios.post(`novel/${name}/ajax/chapters`).then((response) => {
-        const html = response.data;
-        const $ = cheerio.load(html);
-
-        console.log(response.data);
-        $(" li.wp-manga-chapter a").each((i, elm) => {
-          elm.children.forEach((node) => {
-            novelData.chaptersListData.push({ chapterName: node.data.replace(/\n/g, "") });
+      axios
+        .post(`novel/${name}/ajax/chapters`)
+        .then((response) => {
+          const html = response.data;
+          const $ = cheerio.load(html);
+          $(" li.wp-manga-chapter a").each((i, elm) => {
+            elm.children.forEach((node) => {
+              novelData.chaptersListData.push({ chapterName: node.data.replace(/\n/g, "") });
+            });
           });
+          $(" li.wp-manga-chapter span.chapter-release-date i")
+            .contents()
+            .each((i, elm) => {
+              novelData.chaptersListData[i].chapterReleaseTime = elm.data;
+            });
+          res.send(JSON.stringify(novelData));
+          res.end();
+        })
+        .catch((error) => {
+          console.log("Error in sub get chapters list from post ajax request" + error);
+          res.send(JSON.stringify("Error: something went wrong, or check the url", error));
         });
-        $(" li.wp-manga-chapter span.chapter-release-date i")
-          .contents()
-          .each((i, elm) => {
-            novelData.chaptersListData[i].chapterReleaseTime = elm.data;
-          });
-        res.send(JSON.stringify(novelData));
-        res.end();
-      });
+    })
+    .then(() => {
+      axios
+        .get(imageUrl, { responseType: "arraybuffer" })
+        .then((response) => {
+          novelData.baseImage = Buffer.from(response.data).toString("base64").replace(/^/, "data:image/jpeg;base64,");
+        })
+        .catch((error) => {
+          console.log("Error in sub novelData image buffer convert request" + error);
+          res.send(JSON.stringify("Error: something went wrong, or check the url", error));
+          res.end();
+        });
     })
     .catch((error) => {
-      console.log(error);
+      console.log("Error in main novelData request" + error);
       res.send(JSON.stringify("Error: something went wrong, or check the url", error));
       res.end();
     });
