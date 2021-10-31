@@ -73,6 +73,9 @@ app.get("/novel/:name", (req, res, next) => {
               novelData.chaptersListData.push({ chapterName: node.data.replace(/\n/g, "") });
             });
           });
+          $(" li.wp-manga-chapter a").each((i, elm) => {
+            novelData.chaptersListData[i].chapterLinkName = elm.attribs.href.replace(`https://wuxiaworld.site/novel/${name}/`, "").slice(0, -1);
+          });
           $(" li.wp-manga-chapter span.chapter-release-date i")
             .contents()
             .each((i, elm) => {
@@ -82,7 +85,7 @@ app.get("/novel/:name", (req, res, next) => {
           res.end();
         })
         .catch((error) => {
-          console.log("Error in sub get chapters list from post ajax request" + error);
+          console.log("Error in sub get chapters list from POST ajax request" + error);
           res.send(JSON.stringify("Error: something went wrong, or check the url", error));
         });
     })
