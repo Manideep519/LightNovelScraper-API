@@ -3,6 +3,8 @@ const axios = require("axios").default;
 const cheerio = require("cheerio");
 const cors = require("cors");
 const app = express();
+const port = process.env.PORT || 8000;
+
 const corsOptions = {
   origin: "http://localhost:3000",
   credentials: true,
@@ -10,9 +12,13 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-const port = process.env.PORT || 8000;
-
 axios.defaults.baseURL = "https://wuxiaworld.site";
+
+const options = {
+  headers: {
+    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:83.0) Gecko/20100101 Firefox/83.0",
+  },
+};
 
 app.use(express.json());
 
@@ -46,7 +52,7 @@ app.get("/novel/:name", (req, res, next) => {
     chaptersListData: [],
   };
   axios
-    .get(encodedURI)
+    .get(encodedURI, options)
     .then((response) => {
       const html = response.data;
       const $ = cheerio.load(html);
@@ -64,7 +70,7 @@ app.get("/novel/:name", (req, res, next) => {
     })
     .then(() => {
       axios
-        .post(`novel/${name}/ajax/chapters`)
+        .post(`novel/${name}/ajax/chapters`, options)
         .then((response) => {
           const html = response.data;
           const $ = cheerio.load(html);
@@ -91,7 +97,7 @@ app.get("/novel/:name", (req, res, next) => {
     })
     .then(() => {
       axios
-        .get(imageUrl, { responseType: "arraybuffer" })
+        .get(imageUrl, { ...options, responseType: "arraybuffer" })
         .then((response) => {
           novelData.baseImage = Buffer.from(response.data).toString("base64").replace(/^/, "data:image/jpeg;base64,");
         })
@@ -117,7 +123,7 @@ app.get("/novel/:name/:chapter", (req, res, next) => {
   let encodedURI = encodeURI(`novel/${name}/chapter-${chapter}`);
 
   axios
-    .get(encodedURI)
+    .get(encodedURI, options)
     .then((response) => {
       if (response.status === 200) {
         const html = response.data;
@@ -147,7 +153,7 @@ app.get("/novel-list/:page/:order", (req, res, next) => {
   let imageUrlsArray = [];
 
   axios
-    .get(encodedURI)
+    .get(encodedURI, options)
     .then((response) => {
       if (response.status === 200) {
         const html = response.data;
@@ -185,7 +191,7 @@ app.get("/novel-list/:page/:order", (req, res, next) => {
     .then(() => {
       if (imageUrlsArray) {
         axios
-          .all(imageUrlsArray.map((i) => axios.get(i, { responseType: "arraybuffer" })))
+          .all(imageUrlsArray.map((i) => axios.get(i, { ...options, responseType: "arraybuffer" })))
           .then(
             axios.spread((...response) => {
               for (let i = 0; i < 10; i++) {
