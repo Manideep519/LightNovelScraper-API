@@ -4,28 +4,61 @@ const cheerio = require("cheerio");
 const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 8000;
-
-const corsOptions = {
-  origin: "http://localhost:3000",
-  credentials: true,
-  optionSuccessStatus: 200,
-};
-app.use(cors(corsOptions));
+const randomeUserAgent = require("random-useragent");
 
 axios.defaults.baseURL = "https://wuxiaworld.site";
+let ipAddress, portNumber;
+let userAgent = randomeUserAgent.getRandom();
 
-const options = {
-  headers: {
-    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:83.0) Gecko/20100101 Firefox/83.0",
-  },
+let options = {
+  protocol: "https",
+  porxy: ipAddress,
+  port: portNumber,
+  useAgent: userAgent,
 };
 
+app.use(cors());
 app.use(express.json());
 
 app.use(function (req, res, next) {
   res.setHeader("Content-Type", "application/JSON; charset=utf-8");
   next();
 });
+
+let getProxies = (req, res, next) => {
+  let ip_addresses = [];
+  let port_numbers = [];
+  let randomNumber = Math.ceil(Math.random() * 100);
+  axios
+    .get("https://sslproxies.org/")
+    .then((response) => {
+      const html = response.data;
+      const $ = cheerio.load(html);
+
+      $("div.fpl-list td:nth-child(1)")
+        .contents()
+        .each((i, elm) => {
+          ip_addresses[i] = elm.data;
+        });
+
+      $("div.fpl-list td:nth-child(2)")
+        .contents()
+        .each((i, elm) => {
+          port_numbers[i] = elm.data;
+        });
+
+      ipAddress = ip_addresses[randomNumber];
+      portNumber = port_numbers[randomNumber];
+
+      console.log(ipAddress + " " + portNumber, " " + userAgent);
+    })
+    .catch((e) => {
+      console.log("Error in proxy generator" + e);
+    });
+  next();
+};
+
+app.use(getProxies);
 
 // Status check
 
@@ -54,6 +87,7 @@ app.get("/novel/:name", (req, res, next) => {
   axios
     .get(encodedURI, options)
     .then((response) => {
+      console.log(encodedURI);
       const html = response.data;
       const $ = cheerio.load(html);
       novelData.name = $("div.post-title h1").html();
@@ -114,9 +148,16 @@ app.get("/novel/:name", (req, res, next) => {
     });
 });
 
-// Get specific chapter content
+/* Get specific chapter content
 
-//
+
+
+
+
+
+
+
+*/
 app.get("/novel/:name/:chapter", (req, res, next) => {
   let name = req.params.name.replace(/^name:/, "");
   let chapter = req.params.chapter.replace(/^chapter:/, "");
@@ -141,9 +182,13 @@ app.get("/novel/:name/:chapter", (req, res, next) => {
     });
 });
 
-// Get all novels available 10 novels data each request and sort query
+/* Get all novels available 10 novels data each request and sort query
 
-//
+
+
+
+
+*/
 app.get("/novel-list/:page/:order", (req, res, next) => {
   let viewBy = req.params.order.replace(/^order=/, "");
   let page = Number(req.params.page.replace(/^page=/, ""));
@@ -151,6 +196,8 @@ app.get("/novel-list/:page/:order", (req, res, next) => {
 
   let novel = [];
   let imageUrlsArray = [];
+
+  console.log(encodedURI);
 
   axios
     .get(encodedURI, options)
@@ -211,7 +258,7 @@ app.get("/novel-list/:page/:order", (req, res, next) => {
     })
     .catch((error) => {
       console.log("main catch Error: something went wrong, or check the url" + error);
-      res.send(JSON.stringify("main catch Error: something went wrong, or check the url", JSON.stringify(error)));
+      res.send(JSON.stringify("main catch Error: something went wrong, or check the url", error));
       res.end();
     });
 });
