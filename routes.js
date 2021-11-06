@@ -19,7 +19,7 @@ router.get("/novel/:name", (req, res, next) => {
   (async () => {
     let novelData = {};
     try {
-      const browser = await puppeteer.launch({ headless: true, args: [`--proxy-server =${options.proxy}:${options.port}`] });
+      const browser = await puppeteer.launch({ args: [`--proxy-server =${options.proxy}:${options.port}`, `--ignore-certificate-errors`, `--no-sandbox`] });
       const page = await browser.newPage();
       page.setUserAgent(options.useAgent);
       await page.setRequestInterception(true);
@@ -89,7 +89,7 @@ router.get("/novel/:name/:chapter", (req, res, next) => {
   };
   (async () => {
     try {
-      const browser = await puppeteer.launch({ headless: true, args: [`--proxy-server =${options.proxy}:${options.port}`, `--ignore-certificate-errors`, `--no-sandbox`] });
+      const browser = await puppeteer.launch({ args: [`--proxy-server =${options.proxy}:${options.port}`, `--ignore-certificate-errors`, `--no-sandbox`] });
       const page = await browser.newPage();
       page.setUserAgent(options.useAgent);
       await page.setRequestInterception(true);
@@ -128,7 +128,7 @@ router.get("/novel-list/:page/:order", (req, res, next) => {
   let encodedURI = encodeURI(`/novel/page/${page}/?m_orderby=${viewBy}`);
   (async () => {
     try {
-      const browser = await puppeteer.launch({ headless: true, args: [`--proxy-server =${options.proxy}:${options.port}`, `--ignore-certificate-errors`] });
+      const browser = await puppeteer.launch({ args: [`--proxy-server =${options.proxy}:${options.port}`, `--ignore-certificate-errors`, `--no-sandbox`] });
       const page = await browser.newPage();
       page.setUserAgent(options.useAgent);
       await page.setRequestInterception(true);
