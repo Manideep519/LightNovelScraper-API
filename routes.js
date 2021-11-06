@@ -13,7 +13,7 @@ router.get("/", (req, res, next) => {
 
 router.get("/novel/:name", (req, res, next) => {
   let url = req.headers.host;
-  let protocol = "https";
+  let protocol = req.protocol;
   let name = req.params.name.replace(/^name:/, "");
   let encodedURI = encodeURI(`novel/${name}`);
   (async () => {
@@ -121,7 +121,7 @@ router.get("/novel/:name/:chapter", (req, res, next) => {
 */
 router.get("/novel-list/:page/:order", (req, res, next) => {
   let url = req.headers.host;
-  let protocol = "https";
+  let protocol = req.protocol;
   let novel = [];
   let viewBy = req.params.order.replace(/^order=/, "");
   let page = req.params.page.replace(/^:page/, "");
