@@ -8,7 +8,7 @@ const options = middlewares.options;
 const baseScrapeURL = "https://boxnovel.com/";
 
 router.get("/", (req, res, next) => {
-  res.send(JSON.stringify("API is up and runing"));
+  res.send("API is up and runing \n\n Navigate using below link \n\n add the following to your url /novel-list/1/views ");
 });
 
 router.get("/novel/:name", (req, res, next) => {
