@@ -103,7 +103,7 @@ router.get("/novel/:name/:chapter", (req, res, next) => {
       await page.goto(baseScrapeURL.concat(encodedURI), { waitUntil: "domcontentloaded" });
       const html = await page.content();
       const $ = cheerio.load(html);
-      chapter.data = $("div.text-left").text().trim();
+      chapter.data = $("div.text-left").html();
       res.send(chapter);
       res.end();
       browser.close();
@@ -123,6 +123,7 @@ router.get("/novel-list/:page/:order", (req, res, next) => {
   let url = req.headers.host;
   let protocol = req.protocol;
   let novel = [];
+  let tempImageUrl;
   let viewBy = req.params.order.replace(/^order=/, "");
   let page = req.params.page.replace(/^:page/, "");
   let encodedURI = encodeURI(`/novel/page/${page}/?m_orderby=${viewBy}`);
@@ -149,9 +150,9 @@ router.get("/novel-list/:page/:order", (req, res, next) => {
           novel.push({ title: elm.data, link: elm.parentNode.attribs.href.replace(`${baseScrapeURL}`, `${protocol}://${url}/`) });
         });
 
-      // $("div.page-item-detail a img").each((i, elm) => {
-      //   novel[i].imageUrl = encodeURI(elm.attribs.src);
-      // });
+      $("div.page-item-detail a img").each(async (i, elm) => {
+        novel[i].imageUrl = encodeURI(elm.attribs.src);
+      });
 
       $("div.page-item-detail span.score")
         .contents()
@@ -170,6 +171,7 @@ router.get("/novel-list/:page/:order", (req, res, next) => {
         .each((i, elm) => {
           novel[i].lastUpdated = elm.data.trim();
         });
+      page.close();
 
       browser.close();
       res.send(novel);
@@ -181,5 +183,41 @@ router.get("/novel-list/:page/:order", (req, res, next) => {
     }
   })();
 });
+
+// router.get("/test", (req, res) => {
+//   (async () => {
+//     try {
+//       let urls = ["https://boxnovel.com/wp-content/uploads/2020/02/Let-Me-Game-in-Peace-110x150.jpg", "https://boxnovel.com/wp-content/uploads/2018/12/lord-of-the-mysteries-110x150.jpg", "https://boxnovel.com/wp-content/uploads/2019/07/A-Stay-at-home-Dads-Restaurant-In-An-Alternate-World-110x150.jpg", "https://boxnovel.com/wp-content/uploads/2020/06/Mages-Are-Too-OP-110x150.jpg", "https://boxnovel.com/wp-content/uploads/2021/05/i-turned-wild-after-being-doted-on-by-the-big-bosses-110x150.jpg", "https://boxnovel.com/wp-content/uploads/2019/09/worlds-apocalypse-online-110x150.jpg", "https://boxnovel.com/wp-content/uploads/2018/07/War-Sovereign-Soaring-The-Heavens-110x150.jpg", "https://boxnovel.com/wp-content/uploads/2021/02/im-actually-a-cultivation-bigshot-110x150.jpg", "https://boxnovel.com/wp-content/uploads/2018/07/Cultivation-Chat-Group-110x150.jpg", "https://boxnovel.com/wp-content/uploads/2020/12/Fey-Evolution-Merchant-110x150.jpg"];
+//       for (let i = 0; i < urls.length; i++) {
+//         const browser = await puppeteer.launch({ headless: true, args: [`--proxy-server =${options.proxy}:${options.port}`, `--ignore-certificate-errors`, `--no-sandbox`, "--disable-extensions"] });
+//         const pageTwo = await browser.newPage();
+//         const [imageResponse] = await Promise.all([pageTwo.waitForResponse((response) => response), pageTwo.goto(urls[i])]);
+//         const buffer = await imageResponse.buffer();
+//         const base64 = "data:image/png;base64," + buffer.toString("base64");
+//         await pageTwo.close();
+//         console.log(base64);
+//         browser.close();
+//       }
+//     } catch (error) {
+//       console.log(error);
+//     }
+//   })();
+// });
+// router.get("/test", (req, res) => {
+//   (async () => {
+//     try {
+//       const browser = await puppeteer.launch({ headless: false });
+//       const page = await browser.newPage();
+//       await page.setViewport({ width: 1366, height: 768 });
+
+//       page.
+
+//       await page.goto("https://boxnovel.com/novel/?m_orderby=views");
+//       res.end("done");
+//     } catch (error) {
+//       console.log(error);
+//     }
+//   })();
+// });
 
 module.exports = router;
